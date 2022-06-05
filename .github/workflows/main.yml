@@ -1,0 +1,28 @@
+name: Liquibase_Docker_GitHub-Hosted
+
+#on: [push]
+
+# Controls when the action will run. 
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dbscripts/deploy/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  LBJobDockerCLI:
+    runs-on: ubuntu-latest
+    steps: 
+    - uses: actions/checkout@v2
+# note the below assumes that a host path or volume is mounted into the container at ./Docker (or action will fail) !!!
+    - name: Run 'Liquibase status' in a Docker Container	    
+      uses: docker://liquibase/liquibase:latest
+      with:
+        args: --url=${{ secrets.SF_URL }} --changeLogFile=/dbscripts/masterChangelog.xml --username=${{ secrets.SF_USERNAME }} --password=${{ secrets.SF_PASSWORD }} --driver=${{ secrets.SF_DRIVER }} --defaultSchemaName=${{ secrets.SF_SCHEMA }} status
+    
+    - name: Run 'Liquibase update' in a Docker Container
+      uses: docker://liquibase/liquibase:latest
+      with:
+        args: --url=${{ secrets.SF_URL }} --changeLogFile=/dbscripts/masterChangelog.xml --username=${{ secrets.SF_USERNAME }} --password=${{ secrets.SF_PASSWORD }} --driver=${{ secrets.SF_DRIVER }} --defaultSchemaName=${{ secrets.SF_SCHEMA }} --logLevel=debug update
